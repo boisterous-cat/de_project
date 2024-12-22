@@ -41,7 +41,9 @@ def read_xlsx(file_prefix='terminals'):
             try:
                 df = pd.read_excel(excel_file)
                 date_str = os.path.splitext(filename)[0].split('_')[-1]
-                df['update_dt'] = datetime.strptime(date_str, '%d%m%Y').strftime('%Y-%m-%d %H:%M:%S')
+
+                if file_prefix.startswith("terminals"):
+                    df['update_dt'] = datetime.strptime(date_str, '%d%m%Y').strftime('%Y-%m-%d %H:%M:%S')
 
                 if file_prefix.startswith("passport_blacklist"):
                     df = df.rename(columns={"date": "entry_dt", "passport": "passport_num"})

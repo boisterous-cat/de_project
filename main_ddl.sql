@@ -139,12 +139,12 @@ create table public.aadv_rep_fraud (
 	fio varchar (100),
 	phone varchar(16),
 	event_type varchar(20),
-	report_dt date,
+	report_dt date
 );
 
 -- Таблица для метаданных
 create table public.aadv_meta_dwh (
-	schema_name varchar(30)
-    table_name varchar(50)
+	schema_name varchar(30),
+    table_name varchar(50),
     max_update_dt timestamp(0)
 );
