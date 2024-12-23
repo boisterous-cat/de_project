@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2 import sql
+import pandas as pd
 from contextlib import contextmanager
 from config_data.config import Config, load_config
 
@@ -29,7 +30,7 @@ def get_connection():
             conn.close()
 
 
-def execute_query(query, params=None):
+def execute_query(query, params=None) -> None:
     """Функция для выполнения SQL-запросов."""
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -37,8 +38,24 @@ def execute_query(query, params=None):
             conn.commit()
 
 
-def execute_many_query(query, params=None):
-    """Функция для выполнения SQL-запросов."""
+def get_query_data(query, params=None) -> pd.DataFrame:
+    """Функция для получения данных SQL-запросов."""
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+
+            df = pd.DataFrame()
+            try:
+                df = pd.DataFrame(cursor.fetchall(), columns=[i[0] for i in cursor.description])
+            except Exception as e:
+                print(f'No data to return. Error text: {e}')
+
+            conn.commit()
+            return df
+
+
+def execute_many_query(query, params=None) -> None:
+    """Функция для выполнения множественного SQL-запроса."""
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.executemany(query, params)

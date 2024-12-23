@@ -46,6 +46,7 @@ def read_xlsx(file_prefix='terminals'):
                     df['update_dt'] = datetime.strptime(date_str, '%d%m%Y').strftime('%Y-%m-%d %H:%M:%S')
 
                 if file_prefix.startswith("passport_blacklist"):
+                    df['update_dt'] = datetime.strptime(date_str, '%d%m%Y').strftime('%Y-%m-%d %H:%M:%S')
                     df = df.rename(columns={"date": "entry_dt", "passport": "passport_num"})
 
                 backup_filename = f"{filename}.backup"

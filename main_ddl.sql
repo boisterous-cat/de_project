@@ -37,7 +37,6 @@ create table public.aadv_stg_clients (
 	passport_num varchar(20),
 	passport_valid_to date,
 	phone varchar(16),
-	create_dt timestamp(0),
 	update_dt timestamp(0)
 );
 
@@ -46,7 +45,6 @@ create table public.aadv_stg_accounts (
 	account varchar(20),
 	valid_to date,
 	client varchar(20),
-	create_dt timestamp(0),
 	update_dt timestamp(0)
 );
 
@@ -54,7 +52,6 @@ create table public.aadv_stg_accounts (
 create table public.aadv_stg_cards (
 	card_num varchar(20),
 	account varchar(20),
-	create_dt timestamp(0),
 	update_dt timestamp(0)
 );
 
@@ -148,3 +145,14 @@ create table public.aadv_meta_dwh (
     table_name varchar(50),
     max_update_dt timestamp(0)
 );
+
+-- Вставляем метаданные
+insert into public.aadv_meta_dwh(schema_name, table_name, max_update_dt)
+values
+    ('public','aadv_dwh_dim_accounts_hist', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_dwh_dim_clients_hist', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_dwh_dim_cards_hist', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_dwh_dim_terminals_hist', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_dwh_fact_transactions', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_dwh_fact_passport_blacklist', to_timestamp('1899-01-01','YYYY-MM-DD')),
+    ('public','aadv_rep_fraud', to_timestamp('1899-01-01','YYYY-MM-DD'));

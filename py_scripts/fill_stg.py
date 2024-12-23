@@ -1,6 +1,6 @@
 from db.table_names import (stg_cards, stg_accounts, stg_clients,
                             stg_blacklist, stg_transactions, stg_terminals)
-from db.database import execute_query, execute_many_query
+from db.database import execute_query, execute_many_query, get_query_data
 from psycopg2 import sql
 
 
@@ -16,8 +16,8 @@ def clean():
 def fill_staging_from_frame(df, table_name):
     if table_name.startswith('blacklist'):
         recipient_table = stg_blacklist
-        columns = "entry_dt, passport_num"
-        values = "VALUES (%s, %s)"
+        columns = "entry_dt, passport_num, update_dt"
+        values = "VALUES (%s, %s, %s)"
 
     elif table_name.startswith('terminals'):
         recipient_table = stg_terminals
@@ -34,27 +34,51 @@ def fill_staging_from_frame(df, table_name):
     execute_many_query(query, df.values.tolist())
 
 
-def fill_staging_from_base(table_name):
-    source_table = "info." + table_name
-    if table_name.startswith('accounts'):
-        recipient_table = stg_accounts
-        columns = "account, valid_to, client, create_dt, update_dt"
-    elif table_name.startswith('cards'):
-        recipient_table = stg_cards
-        columns = "card_num, account, create_dt, update_dt"
-    else:
-        recipient_table = stg_clients
-        columns = ("client_id, last_name, first_name, patronymic, "
-                   "date_of_birth, passport_num, passport_valid_to, phone,"
-                   "create_dt,update_dt")
-
+def fill_data(table_name: str, staging_table: str, del_table: str, columns: list) -> None:
+    # Захват данных из источника (измененных с момента последней загрузки) в стейджинг
     query = f"""
-        INSERT INTO {recipient_table} ({columns})
-        SELECT {columns}
-        FROM {source_table}
+    SELECT {', '.join(columns)}, coalesce(update_dt, create_dt) AS update_dt
+    FROM info.{table_name}
+    WHERE coalesce(update_dt, create_dt) > (
+        SELECT max_update_dt 
+        FROM public.aadv_meta_dwh 
+        WHERE schema_name='public' 
+        AND table_name='aadv_dwh_dim_{table_name}_hist'
+    )
+    """
+    data_df = get_query_data(query)
+
+    # Захват в стейджинг ключей из источника полным срезом для вычисления удалений
+    del_query = f"SELECT {columns[0]} FROM info.{table_name}"
+    del_df = get_query_data(del_query)
+
+    # insert queries
+    insert_query = f"""
+    INSERT INTO public.{staging_table}({', '.join(columns + ['update_dt'])}) 
+    VALUES({', '.join(['%s'] * (len(columns) + 1))})
     """
 
-    execute_query(query)
+    del_query = f"""
+    INSERT INTO public.{del_table}({columns[0]}) 
+    VALUES(%s)
+    """
+
+    execute_many_query(insert_query, data_df.values.tolist())
+    execute_many_query(del_query, del_df.values.tolist())
+
+
+def fill_accounts() -> None:
+    fill_data('accounts', 'aadv_stg_accounts', 'aadv_stg_accounts_del', ['account', 'valid_to', 'client'])
+
+
+def fill_cards() -> None:
+    fill_data('cards', 'aadv_stg_cards', 'aadv_stg_cards_del', ['card_num', 'account'])
+
+
+def fill_clients() -> None:
+    fill_data('clients', 'aadv_stg_clients', 'aadv_stg_clients_del',
+              ['client_id', 'last_name', 'first_name', 'patronymic',
+               'date_of_birth', 'passport_num', 'passport_valid_to', 'phone'])
 
 
 def update_tables(df_terminals, df_blacklist, df_transactions):
@@ -63,10 +87,6 @@ def update_tables(df_terminals, df_blacklist, df_transactions):
     fill_staging_from_frame(df_blacklist, 'blacklist')
     fill_staging_from_frame(df_terminals, 'terminals')
 
-    fill_staging_from_base('cards')
-    fill_staging_from_base('accounts')
-    fill_staging_from_base('clients')
-
-# Добавление нового пользователя
-# insert_user = f"INSERT INTO {USERS_TABLE} (name) VALUES (%s);"
-# execute_query(insert_user, ('John Doe',))
+    fill_cards()
+    fill_accounts()
+    fill_clients()
