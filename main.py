@@ -4,7 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 from py_scripts import read_data
 import psycopg2
-from py_scripts import fill_stg, fill_dim
+from py_scripts import fill_stg, fill_dim, fill_facts
 
 
 # Press the green button in the gutter to run the script.
@@ -17,6 +17,7 @@ if __name__ == '__main__':
     print("sth1")
     fill_stg.update_tables(df_terminals, df_blacklist, df_transaction)
     fill_dim.update_tables()
+    fill_facts.update_tables()
     print("sth")
 
 

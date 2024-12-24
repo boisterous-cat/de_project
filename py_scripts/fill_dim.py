@@ -18,5 +18,44 @@ def fill_accounts() -> None:
         print(f"An error occurred: {e}")
 
 
+def fill_clients() -> None:
+    # Construct the path to the SQL script
+    sql_script_path = os.path.join(current_directory, '..', 'sql_scripts', 'dim_clients_hist.sql')
+
+    try:
+        with open(sql_script_path, 'r') as file:
+            sql_script = file.read()
+        execute_query(sql_script)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def fill_cards() -> None:
+    # Construct the path to the SQL script
+    sql_script_path = os.path.join(current_directory, '..', 'sql_scripts', 'dim_cards_hist.sql')
+
+    try:
+        with open(sql_script_path, 'r') as file:
+            sql_script = file.read()
+        execute_query(sql_script)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def fill_terminals() -> None:
+    # Construct the path to the SQL script
+    sql_script_path = os.path.join(current_directory, '..', 'sql_scripts', 'dim_terminals_hist.sql')
+
+    try:
+        with open(sql_script_path, 'r') as file:
+            sql_script = file.read()
+        execute_query(sql_script)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
 def update_tables():
     fill_accounts()
+    fill_clients()
+    fill_cards()
+    fill_terminals()
