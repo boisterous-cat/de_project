@@ -4,7 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 from py_scripts import read_data
 import psycopg2
-from py_scripts import fill_stg, fill_dim, fill_facts
+from py_scripts import fill_stg, fill_dim, fill_facts, fill_report
 
 
 # Press the green button in the gutter to run the script.
@@ -14,13 +14,13 @@ if __name__ == '__main__':
     df_blacklist = read_data.read_xlsx('passport_blacklist')
     df_transaction = read_data.read_csv('transaction')
 
-    print("sth1")
+    # update stage tables
     fill_stg.update_tables(df_terminals, df_blacklist, df_transaction)
+
+    # fill dim tables
     fill_dim.update_tables()
+
+    # fill fact tables
     fill_facts.update_tables()
-    print("sth")
-
-
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    fill_report.fill_report()
+    print("Everything done")

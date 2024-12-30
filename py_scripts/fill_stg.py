@@ -14,6 +14,12 @@ def clean():
 
 # Заполняем актуальными данными стейджинговые таблицы из бд
 def fill_staging_from_frame(df, table_name):
+    for col in df.columns:
+        try:
+            df[col] = df[col].apply(lambda x: x.strip())
+        except:
+            continue
+
     if table_name.startswith('blacklist'):
         recipient_table = stg_blacklist
         columns = "entry_dt, passport_num, update_dt"
@@ -29,7 +35,7 @@ def fill_staging_from_frame(df, table_name):
         values = "VALUES (%s, %s, %s, %s, %s, %s, %s)"
     # Insert each row
     query = f"""
-            INSERT INTO {recipient_table} ({columns}) {values}
+            INSERT INTO public.{recipient_table} ({columns}) {values}
         """
     execute_many_query(query, df.values.tolist())
 
@@ -48,9 +54,24 @@ def fill_data(table_name: str, staging_table: str, del_table: str, columns: list
     """
     data_df = get_query_data(query)
 
+    # there are empty spaces somewhere. lets clean
+    for col in data_df.columns:
+        try:
+            data_df[col] = data_df[col].apply(lambda x: x.strip())
+        except:
+            continue
+
+
     # Захват в стейджинг ключей из источника полным срезом для вычисления удалений
     del_query = f"SELECT {columns[0]} FROM info.{table_name}"
     del_df = get_query_data(del_query)
+
+    if table_name=="accounts":
+        del_df['account'] = del_df.account.astype('str').apply(lambda x: x.strip())
+    if table_name=="cards":
+        del_df['card_num'] = del_df.card_num.astype('str').apply(lambda x: x.strip())
+    if table_name=="clients":
+        del_df['client_id'] = del_df.client_id.astype('str').apply(lambda x: x.strip())
 
     # insert queries
     insert_query = f"""
